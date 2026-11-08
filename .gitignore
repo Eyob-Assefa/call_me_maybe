@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and environments
+.venv/
+.mypy_cache/
+.pytest_cache/
+
+# Data output (explicitly forbidden from submission in the subject)
+data/output/
+output/
+
+# macOS / OS artifacts
+.DS_Store
+Thumbs.db
