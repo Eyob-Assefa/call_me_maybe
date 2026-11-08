@@ -8,10 +8,10 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 
-# Data output (explicitly forbidden from submission in the subject)
+# Data output 
 data/output/
 output/
 
-# macOS / OS artifacts
+# artifacts
 .DS_Store
 Thumbs.db
