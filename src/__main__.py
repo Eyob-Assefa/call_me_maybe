@@ -1,3 +1,5 @@
+"""Main command-line entry point for constrained function calling."""
+
 import argparse
 import sys
 from typing import List
@@ -12,15 +14,8 @@ from src.schemas import FunctionCallOutput
 from src.tokenizer_index import TokenizerIndex
 
 
-"""Main command-line entry point for constrained function calling."""
-
-
 def parse_arguments() -> argparse.Namespace:
-    """Parse and return command-line arguments with project defaults.
-
-    Returns:
-        Parsed CLI arguments namespace.
-    """
+    """Parse and return command-line arguments with project defaults."""
     parser = argparse.ArgumentParser(
         description="Constrained decoding function calling engine.",
     )
@@ -52,7 +47,10 @@ def main() -> None:
     print("[1/5] Loading input files...")
     function_defs = load_function_definitions(args.functions_definition)
     if not function_defs:
-        print("Aborting: No valid function definitions loaded.", file=sys.stderr)
+        print(
+            "Aborting: No valid function definitions loaded.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     test_prompts = load_prompts(args.input)
@@ -67,8 +65,7 @@ def main() -> None:
 
     print("[2/5] Initializing LLM SDK and vocabulary...")
     try:
-        # Import local llm_sdk module directly
-        from llm_sdk import Small_LLM_Model  # type: ignore[import-untyped]
+        from llm_sdk import Small_LLM_Model  # type: ignore[attr-defined]
 
         model = Small_LLM_Model()
         vocab_path = model.get_path_to_vocab_file()
@@ -83,16 +80,22 @@ def main() -> None:
     results: List[FunctionCallOutput] = []
 
     for index, prompt_item in enumerate(test_prompts, start=1):
-        print(f"  Processing prompt {index}/{len(test_prompts)}: '{prompt_item.prompt}'")
+        print(
+            f"  Processing prompt {index}/{len(test_prompts)}: "
+            f"'{prompt_item.prompt}'"
+        )
         try:
-            output = decoder.decode_function_call(prompt_item.prompt, function_defs)
+            output = decoder.decode_function_call(
+                prompt_item.prompt,
+                function_defs,
+            )
             results.append(output)
         except Exception as err:
             print(
-                f"Warning: Failed to process prompt '{prompt_item.prompt}': {err}",
+                f"Warning: Failed to process prompt "
+                f"'{prompt_item.prompt}': {err}",
                 file=sys.stderr,
             )
-            # Safe empty fallback to preserve schema integrity
             results.append(
                 FunctionCallOutput(
                     prompt=prompt_item.prompt,
@@ -104,7 +107,10 @@ def main() -> None:
     print(f"[4/5] Saving {len(results)} outputs to {args.output}...")
     success = save_function_calls(results, args.output)
     if not success:
-        print(f"Error: Failed to write output to {args.output}", file=sys.stderr)
+        print(
+            f"Error: Failed to write output to {args.output}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     print("[5/5] Done! Execution completed successfully.")
