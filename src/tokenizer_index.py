@@ -1,43 +1,8 @@
 """Vocabulary and token indexing for fast constrained decoding."""
 
 import json
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 from pydantic import BaseModel, Field
-
-
-class TrieNode:
-    """Node in a character-level prefix tree."""
-
-    def __init__(self) -> None:
-        """Initialize child links and completion marker."""
-        self.children: Dict[str, "TrieNode"] = {}
-        self.is_terminal: bool = False
-
-
-class PrefixTrie:
-    """Trie structure to query valid string continuations."""
-
-    def __init__(self) -> None:
-        """Initialize root node."""
-        self.root = TrieNode()
-
-    def insert(self, word: str) -> None:
-        """Insert a valid target word into the trie."""
-        curr = self.root
-        for char in word:
-            if char not in curr.children:
-                curr.children[char] = TrieNode()
-            curr = curr.children[char]
-        curr.is_terminal = True
-
-    def get_node(self, prefix: str) -> Optional[TrieNode]:
-        """Traverse to the node representing the given prefix."""
-        curr = self.root
-        for char in prefix:
-            if char not in curr.children:
-                return None
-            curr = curr.children[char]
-        return curr
 
 
 class TokenizerConfig(BaseModel):

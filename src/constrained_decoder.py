@@ -66,12 +66,14 @@ class ConstrainedDecoder:
         """Select a valid function name using constrained prefix decoding."""
         function_names = [f.name for f in function_defs]
         tools_desc = "\n".join(
-            f"- {f.name}: {f.description}" for f in function_defs
+            f"- {f.name}({', '.join(f.parameters.keys())}): {f.description}"
+            for f in function_defs
         )
         query = (
-            f"Available functions:\n{tools_desc}\n\n"
-            f'User request: "{prompt}"\n'
-            f'JSON call: {{"name": "'
+            f"Select the single best function for the user request.\n"
+            f"Functions:\n{tools_desc}\n\n"
+            f"Request: {prompt}\n"
+            f"Selected function: "
         )
         input_ids: List[int] = self._encode_to_ids(query)
         generated_name = ""
@@ -111,7 +113,7 @@ class ConstrainedDecoder:
         partial = json.dumps(prior_params)[:-1]
         sep = ", " if prior_params else ""
         return (
-            f'User request: "{prompt}"\n'
+            f"User request: {prompt}\n"
             f'JSON call: {{"name": "{func_name}", '
             f'"parameters": {partial}{sep}"{param_name}":'
         )
@@ -166,7 +168,7 @@ class ConstrainedDecoder:
         param_name: str,
         prior_params: Dict[str, Any],
     ) -> str:
-        """Extract a string parameter using JSON-context logit masking."""
+        """Extract a string parameter using logit masking."""
         query = (
             self._build_param_prefix(
                 prompt, func_name, prior_params, param_name
@@ -179,7 +181,7 @@ class ConstrainedDecoder:
         )
         generated_str = ""
 
-        for _ in range(30):
+        for _ in range(40):
             logits = self.model.get_logits_from_input_ids(input_ids)
             next_token_id = self.mask_and_select(logits, allowed)
             token_str = self.index.id_to_token.get(next_token_id, "")
@@ -212,11 +214,16 @@ class ConstrainedDecoder:
                     extracted[param_name] = self.extract_number_parameter(
                         prompt, chosen_name, param_name, extracted
                     )
-                elif param_spec.type == "boolean":
-                    val = self.extract_string_parameter(
+                elif param_spec.type == "integer":
+                    val_num = self.extract_number_parameter(
                         prompt, chosen_name, param_name, extracted
                     )
-                    extracted[param_name] = val.lower() == "true"
+                    extracted[param_name] = int(round(val_num))
+                elif param_spec.type == "boolean":
+                    val_str = self.extract_string_parameter(
+                        prompt, chosen_name, param_name, extracted
+                    )
+                    extracted[param_name] = val_str.lower() == "true"
                 else:
                     extracted[param_name] = self.extract_string_parameter(
                         prompt, chosen_name, param_name, extracted
